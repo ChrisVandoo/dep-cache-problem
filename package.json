@@ -5,9 +5,8 @@
   "scripts": {
     "test": "vitest",
     "test:ci": "vitest run",
-    "build": "./util/build-with-cache.sh ./util/build.js ./dist/dep.bin",
-    "start": "node ./src/main.js",
-    "graph": "node ./util/graph.js"
+    "build": "node ./util/build-with-cache.js ./util/build.js ./dist/dep.bin",
+    "start": "node ./src/main.js"
   },
   "type": "module",
   "author": "",
