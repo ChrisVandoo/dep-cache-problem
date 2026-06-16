@@ -18,6 +18,9 @@ jobs:
         with:
           key: util-build-cache
           path: .cache
+      
+      - name: Install Dependencies
+        run: npm install
 
       - name: Build ./dist/dep.bin
         run: npm run build
