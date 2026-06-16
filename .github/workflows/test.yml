@@ -31,6 +31,13 @@ jobs:
         with:
           name: ${{ steps.build.outputs.filename }}
           path: dist/dep.bin
+      
+      - name: Upload Binary to Release Page
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          files: |
+            .cache/**
 
       - name: Run Tests
         run: npm run test:ci
