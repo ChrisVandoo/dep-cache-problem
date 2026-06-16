@@ -86,6 +86,7 @@ function BuildWithCache(input, output) {
   let target = path.join(cacheDir, hash);
   if (fs.existsSync(target)) {
     console.log(`Found cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
+    fs.mkdirSync(file.dirname(ouptu), {recursive: true});
     fs.copyFileSync(target, output);
   } else {
     const res = execSync(`node ${input}`, {encoding: 'utf-8'});
