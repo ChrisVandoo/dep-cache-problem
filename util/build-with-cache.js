@@ -20,12 +20,10 @@ function getImportsForFile(file) {
   let dependencies = new Map();
   for (let i = 0; i < imports.length; i++) {
     let dep = imports[i].n;
-    // TODO: need to account for extensionless imports, typescript...
     if (path.extname(dep) == ".js") {
       dep = path.join(path.dirname(file), dep);
     }
 
-    // TODO: add guard against circular imports
     if (! dependencies.has(dep) && fs.existsSync(dep)) {
       let res = getImportsForFile(dep);
       res.forEach((value, key) => dependencies.set(key, value));
@@ -45,12 +43,6 @@ function isThirdPartyDep(dep) {
 
 // Computes a hash used for the build cache based on file contents, dependencies, OS, and CPU architecture.
 function computeHash(file) {
-  // TODO: this will cause cache collisions on "undefined"
-  if (! fs.existsSync(file)) {
-    console.log(`failed to read ${file}, unable to compute hash`);
-    return;
-  }
-
   const hash = crypto.createHash('sha256');
   hash.update(`${process.version} ${process.platform} ${process.arch}`);
   hash.update(fs.readFileSync(file));
@@ -68,7 +60,6 @@ function computeHash(file) {
     }
   })
 
-  // TODO: this should be updated to only invalidate the cache when a 3rd party dep specifically used by the file (or dependents) changes
   if (hashPackageFiles) {
     hash.update(fs.readFileSync('package.json'));
     hash.update(fs.readFileSync('package-lock.json'));
@@ -79,6 +70,11 @@ function computeHash(file) {
 
 // Builds <input> with `node` and caches the <output>
 function BuildWithCache(input, output) {
+  if (! fs.existsSync(input)) {
+    console.log(`failed to read ${input}, unable to build`);
+    return;
+  }
+
   console.log(`Executing node ${input} to build ${output}...`);
 
   let cacheDir = getCacheDirName();
@@ -90,9 +86,9 @@ function BuildWithCache(input, output) {
   let target = path.join(cacheDir, hash);
   if (fs.existsSync(target)) {
     console.log(`Found cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
+    fs.mkdirSync(path.dirname(output), {recursive: true});
     fs.copyFileSync(target, output);
   } else {
-    // TODO: should handle failure to build, possibly stream stdout?
     const res = execSync(`node ${input}`, {encoding: 'utf-8'});
     console.log(res)
     fs.copyFileSync(output, target);
