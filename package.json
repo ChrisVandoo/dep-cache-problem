@@ -5,7 +5,7 @@
   "scripts": {
     "test": "vitest",
     "test:ci": "vitest run",
-    "build": "node ./util/build.js",
+    "build": "./util/build-with-cache.sh ./util/build.js ./dist/dep.bin",
     "start": "node ./src/main.js"
   },
   "type": "module",
