@@ -34,9 +34,10 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: ${{ steps.build.outputs.filename }}
+          tag_name: ${{ steps.build.outputs.filename }}
           draft: true
           files: |
-            .cache/**/${{ steps.build.outputs.filename }}
+            ./dist/dep.bin
 
       - name: Run Tests
         run: npm run test:ci
