@@ -83,7 +83,8 @@ function BuildWithCache(input, output) {
   }
 
   let hash = computeHash(input);
-  let target = path.join(cacheDir, hash);
+  let basename = `${process.platform}-${process.arch}-${hash}`;
+  let target = path.join(cacheDir, basename);
   if (fs.existsSync(target)) {
     console.log(`Found cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
     fs.mkdirSync(path.dirname(output), {recursive: true});
@@ -93,7 +94,14 @@ function BuildWithCache(input, output) {
     console.log(res)
     fs.copyFileSync(output, target);
   }
+
+  return basename;
 }
 
 await init;
-BuildWithCache(process.argv[2], process.argv[3]);
+let cacheFileName = BuildWithCache(process.argv[2], process.argv[3]);
+if (process.env.GITHUB_OUTPUT) {
+  let out = `filename=${cacheFileName}`;
+  console.log(out)
+  fs.appendFileSync(process.env.GITHUB_OUTPUT, out + '\n');
+}

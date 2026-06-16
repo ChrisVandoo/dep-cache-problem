@@ -23,7 +23,14 @@ jobs:
         run: npm install
 
       - name: Build ./dist/dep.bin
+        id: build
         run: npm run build
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.filename }}
+          path: dist/dep.bin
 
       - name: Run Tests
         run: npm run test:ci
