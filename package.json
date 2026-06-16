@@ -6,7 +6,8 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "build": "./util/build-with-cache.sh ./util/build.js ./dist/dep.bin",
-    "start": "node ./src/main.js"
+    "start": "node ./src/main.js",
+    "graph": "node ./util/graph.js"
   },
   "type": "module",
   "author": "",
@@ -14,5 +15,8 @@
   "description": "",
   "devDependencies": {
     "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "es-module-lexer": "^2.1.0"
   }
 }

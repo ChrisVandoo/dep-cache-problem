@@ -12,7 +12,7 @@ b) any supporting code/scripts for implementing the caching
 
 Note that the standard cache action might not be sufficient because of the local dev requirement. Please show your work and demonstrate that the caching implementation works in all cases.
 
-## Ideas/Questions
+## Ideas/Questions/Notes
 - setup caching step in workflow, advantage is standard no custom script, doesn't support dev case
   - https://github.com/actions/cache/blob/main/caching-strategies.md, and https://github.com/actions/cache/blob/main/examples.md#node---npm for examples around using the cache action w/ NPM
 - use separate workflow to build the binary based on if the file changes, store the binary somewhere in Github and add a step that downloads it in the action?
@@ -26,11 +26,12 @@ Can I assume that the build will always run before trying to run tests/start the
 
 Does the requirement for devs to be able to "fetch cached artifacts" indicate that they should be able to download the prebuilt/cached binary from Github?
 
-## Notes
 - the tests will fail if dist/dep.bin doesn't exist, also trying to start the application will fail
 - the build is painfully slow...
 - the binary is generated with a timestamp which could be used for cache invalidation...
 - problem: it is relatively easy to modify the build for dist/dep.bin to add some caching, what checks that this file isn't outdate when running tests?
+- how should dependencies of build.js be considered?
+- the embedded timestamp changes every second, can this be ignored?
 
 ## Requirements
 - only build the binary when its code changes
@@ -38,13 +39,27 @@ Does the requirement for devs to be able to "fetch cached artifacts" indicate th
 - devs should be able to fetch the cached artifact
 - need cache invalidation if the binary changes
 
-## Cache Requirements
-Start with simple case, implement basic cache using file age to determine if cache is valid/stale, the cache dir can be uploaded with Github Actions cache action for 
+### Cache Requirements
+Things that may change the output file (`dist/dep.bin`):
+- OS
+- Architecture
+- Date/Time
+- NPM/Node version
+- 3rd party dependencies
+- source code dependencies
+- source code changes
 
-- cache based off of file hash? - apparently slower than timestamp, still doesn't feel slow
-- create local cache directory
-- create file with "cache age" for dep.bin
-- check when util/build.js changed
+Other considerations:
+- How long is a cache entry valid for (TTL)?
+- What manages/cleans up old cache entries?
+- Race conditions - what happens when multiple CI builds try to update the same cache?
+- How should `# auto generated on ${new Date().toISOString()` be handled?
+- How should we validate we are only caching properly built output, check that the cache doesn't get corrupted
+
+Design:
+- ignore embedded timestamp mostly as it changes the output file on every run. Instead decide on a sane TTL (ex. 12 hours, 24 hours) after which the binary needs to be rebuilt. Could consider updating the format to exclude hour/minute/seconds.
+- .cache directory should have os/architecture specific subdirectories, for example: `.cache/linux-amd64/`, `.cache/darwin-arm64/`. Use `arch` to get architecture, `uname` to get OS, or maybe a Javscript stdlib function.
+- create a hash that includes source code, all dependencies, and npm/node version, mapped to a cached binary. For source code dependencies, use a hash of the file rather than trying to detect if the specific imported function(s) have changed.
 
 ## Limitations/Future Improvements
 - Developers need to run `npm run build` to ensure `dist/dep.bin` is up-to-date, this is not handled as part of the cache funtionality.
