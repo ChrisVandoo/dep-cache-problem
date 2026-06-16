@@ -29,19 +29,14 @@ jobs:
       - name: Build ./dist/dep.bin
         id: build
         run: npm run build
-
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.build.outputs.filename }}
-          path: dist/dep.bin
       
       - name: Upload Binary to Release Page
         uses: softprops/action-gh-release@v3
         with:
+          name: ${{ steps.build.outputs.filename }}
           draft: true
           files: |
-            .cache/**
+            .cache/**/${{ steps.build.outputs.filename }}
 
       - name: Run Tests
         run: npm run test:ci
