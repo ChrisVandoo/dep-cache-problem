@@ -65,3 +65,6 @@ Design:
 - Developers need to run `npm run build` to ensure `dist/dep.bin` is up-to-date, this is not handled as part of the cache funtionality.
 - No cache cleanup/maintenance functionality, currently the cache will continue to grow over time. In CI, this will continue until the 10GB limit in Github Actions is hit. Locally, until the developer deletes the `.cache` directory.
 - the remote cache should be implemented as a separate service rather than piggy-backing on Github Release functionality
+
+## Results
+Sample CI run with cache hit - https://github.com/ChrisVandoo/dep-cache-problem/actions/runs/27656959862/job/81793079453. Build takes 1s instead of 20s.
