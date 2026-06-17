@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process'
 import crypto from 'node:crypto'
 import { execSync } from 'node:child_process';
+import { Octokit } from "@octokit/core";
 
 const DEFAULT_CACHE_DIR = ".cache"
 
@@ -68,8 +69,37 @@ function computeHash(file) {
   return hash.digest('hex');
 }
 
+async function checkRemoteCache(target) {
+  const octokit = new Octokit();
+
+  let res = await octokit.request('GET /repos/{owner}/{repo}/releases', {
+    owner: 'ChrisVandoo',
+    repo: 'dep-cache-problem',
+    headers: {
+      'X-GitHub-Api-Version': '2026-03-10'
+    }
+  })
+
+  console.log(`Checking remote cache for ${target}...`);
+
+  let downloadUrl;
+  for (let i = 0; i < res.data.length; i++) {
+    let obj = res.data[i];
+    console.log(`  found ${obj.name}`);
+    if (obj.name == target) {
+      downloadUrl = obj.assets[0].browser_download_url;
+      const bin = await fetch(downloadUrl);
+      const buffer = Buffer.from(await bin.arrayBuffer());
+      fs.writeFileSync(path.join(getCacheDirName(), target), buffer);
+      return true
+    }
+  }
+  
+  return false
+}
+
 // Builds <input> with `node` and caches the <output>
-function BuildWithCache(input, output) {
+async function BuildWithCache(input, output) {
   if (! fs.existsSync(input)) {
     console.log(`failed to read ${input}, unable to build`);
     return;
@@ -86,10 +116,15 @@ function BuildWithCache(input, output) {
   let basename = `${process.platform}-${process.arch}-${hash}`;
   let target = path.join(cacheDir, basename);
   if (fs.existsSync(target)) {
-    console.log(`Found cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
+    console.log(`Found locally cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
+    fs.mkdirSync(path.dirname(output), {recursive: true});
+    fs.copyFileSync(target, output);
+  } else if (await checkRemoteCache(basename)) {
+    console.log(`Found remote cached ${output} for ${input} hash: ${hash}. Skipping build and using cached file...`);
     fs.mkdirSync(path.dirname(output), {recursive: true});
     fs.copyFileSync(target, output);
   } else {
+    console.log(`No cached binary found for ${basename}, re-building...`)
     const res = execSync(`node ${input}`, {encoding: 'utf-8'});
     console.log(res)
     fs.copyFileSync(output, target);
@@ -99,7 +134,7 @@ function BuildWithCache(input, output) {
 }
 
 await init;
-let cacheFileName = BuildWithCache(process.argv[2], process.argv[3]);
+let cacheFileName = await BuildWithCache(process.argv[2], process.argv[3]);
 if (process.env.GITHUB_OUTPUT) {
   let out = `filename=${cacheFileName}`;
   console.log(out)

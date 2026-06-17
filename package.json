@@ -16,6 +16,7 @@
     "vitest": "^4.0.17"
   },
   "dependencies": {
+    "@octokit/core": "^7.0.6",
     "es-module-lexer": "^2.1.0"
   }
 }
