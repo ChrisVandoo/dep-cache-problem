@@ -63,6 +63,5 @@ Design:
 
 ## Limitations/Future Improvements
 - Developers need to run `npm run build` to ensure `dist/dep.bin` is up-to-date, this is not handled as part of the cache funtionality.
-- Local and CI caches are separate, no global remote cache to download the latest binary from.
 - No cache cleanup/maintenance functionality, currently the cache will continue to grow over time. In CI, this will continue until the 10GB limit in Github Actions is hit. Locally, until the developer deletes the `.cache` directory.
-- Caching is implemented using a script that makes assumptions about what needs to be cached (a single file built to create a single binary output), would need to be updated to handle multiple files producing a single output and to handle caching multiple output binaries.
+- the remote cache should be implemented as a separate service rather than piggy-backing on Github Release functionality
