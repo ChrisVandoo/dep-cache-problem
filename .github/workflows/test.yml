@@ -1,5 +1,9 @@
 name: Test
 on: [push, pull_request]
+
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,7 +27,16 @@ jobs:
         run: npm install
 
       - name: Build ./dist/dep.bin
+        id: build
         run: npm run build
+      
+      - name: Upload Binary to Release Page
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ steps.build.outputs.filename }}
+          tag_name: ${{ steps.build.outputs.filename }}
+          files: |
+            ./dist/dep.bin
 
       - name: Run Tests
         run: npm run test:ci
